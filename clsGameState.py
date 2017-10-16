@@ -42,9 +42,11 @@ class GameState:
         point = PT.point(x,y)
         blnSuccess = self.GameBoard.PlacePiece(point, 
                                      self.ActivePlayer.SelectedPiece, 
-                                     blnGhostPlacement)       
+                                     blnGhostPlacement,
+                                     self.ActivePlayer.blnFirstMove)       
         if blnSuccess:                                          
             if not blnGhostPlacement:
+                self.ActivePlayer.blnFirstMove = False
                 self.ActivePlayer.SelectedPiece.used = True
                 self.ActivePlayer.CheckRemainingPieces()
                 if not self.ActivePlayer.blnNoPiecesRemaining:
@@ -66,10 +68,14 @@ class GameState:
         """ Checks if a player has any playable pieces remaining """
         if player is None:
             player = self.ActivePlayer
-        for piece in player.lsPlayerPieces:
-            if not piece.used:
-                if self.GameBoard.CheckForValidMoves(piece):
-                    return True
+        if not player.blnDone:
+            for piece in player.lsPlayerPieces:
+                if not piece.used:
+                    if self.GameBoard.CheckForValidMoves(piece, 
+                                                         player.blnFirstMove):
+                        return True
+                        
+        player.blnDone = True
         return False
             
     def EndGame(self):

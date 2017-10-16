@@ -13,19 +13,31 @@ class Player:
     Players have IDs.
     
     Attributes: 
-        playerID: An integer (1-4) that represents the player.
-        name: A string that is the player's name.
-        lsPieces: A vector of all the game pieces.
-        points: An integer of the number of points the player has (usually 0)
-        blnNoPiecesRemaining: A scorekeeping variable, to detect if all pieces
-            have been used.
-        blnLastPieceMonomino: A scorekeeping variable, to detect if the last
-            piece was a monomino.
+        playerID: 
+            An integer (1-4) that represents the player.
+        name: 
+            A string that is the player's name.
+        lsPieces: 
+            A vector of all the game pieces.
+        points: 
+            An integer of the number of points the 
+            player has (usually 0)
+        blnNoPiecesRemaining: 
+            A scorekeeping variable, to detect if all 
+            pieces have been used.
+        blnLastPieceMonomino: 
+            A scorekeeping variable, to detect if the 
+            last piece was a monomino.
+        blnFirstMove: 
+            Indentifies whether this is the player's 
+            first move or not. 
     """  
     
     lsPieces = GPLM.lsPieces
     blnLastPieceMonomino = False
     blnNoPiecesRemaining = False
+    blnFirstMove = True
+    blnDone = False
     
     points = 0
     
@@ -90,5 +102,9 @@ class Player:
         
         p.blnLastPieceMonomino = self.blnLastPieceMonomino
         p.blnNoPiecesRemaining = self.blnNoPiecesRemaining
+        p.blnFirstMove = self.blnFirstMove
+        
+        p.blnDone = self.blnDone
+        
         p.points = self.points
         return p

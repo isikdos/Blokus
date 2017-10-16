@@ -8,16 +8,6 @@ Created on Sun Oct  8 14:38:56 2017
 import clsPoint as P
 import clsGameTile as GT
 
-PLAYER1TILE = GT.GameTile(1, False)
-PLAYER2TILE = GT.GameTile(2, False)
-PLAYER3TILE = GT.GameTile(3, False)
-PLAYER4TILE = GT.GameTile(4, False)
-
-fakePLAYER1TILE = GT.GameTile(1, True, False)
-fakePLAYER2TILE = GT.GameTile(2, True, False)
-fakePLAYER3TILE = GT.GameTile(3, True, False)
-fakePLAYER4TILE = GT.GameTile(4, True, False)
-
 class GameBoard:
     """ This class represents the game board for the game Blokus.
     
@@ -30,43 +20,28 @@ class GameBoard:
         yMax: Constant. Represents the maximum Y position for a game tile.
         xMin: Constant. Represents the minimum X position for a game tile.
         yMin: Constant. Represents the minimum Y position for a game tile.
-        xBound: A constant that represents the behind-the-scenes size of 
-            the GameBoard
-        yBound: A constant that represents the behind-the-scenes size of
-            the GameBoard
+
         lsLocations: Two dimensional, 22 by 22 array of Game Tiles.
     """
-    xMax = 21
-    yMax = 21
-    xMin = 1
-    yMin = 1
-    
-    xBound = 22
-    yBound = 22
+    xMax = 20
+    yMax = 20
+    xMin = 0
+    yMin = 0
     
     
     def __init__(self):
         self.lsLocations = []
         'For every row...'
-        for i in range(0, self.xBound):
+        for i in range(0, self.xMax):
             self.lsLocations.append([])
             'We make a column...'
-            for j in range(0, self.yBound):
+            for j in range(0, self.yMax):
                 self.lsLocations[i].append(GT.GameTile(0, False))                    
-        
-        'And we defined dummy-pieces so that players can start in the'
-        'correct places.'
-        self.lsLocations[0][0]                              = PLAYER1TILE
-        self.lsLocations[self.xBound - 1][self.yBound - 1]  = PLAYER2TILE
-        self.lsLocations[0][self.xBound - 1]                = PLAYER3TILE
-        self.lsLocations[self.yBound - 1][0]                = PLAYER4TILE
-        
-        self.lsLocations[1][1]                              = fakePLAYER1TILE
-        self.lsLocations[self.xBound - 2][self.yBound - 2]  = fakePLAYER2TILE
-        self.lsLocations[1][self.xBound - 2]                = fakePLAYER3TILE
-        self.lsLocations[self.yBound - 2][1]                = fakePLAYER4TILE
    
-    def PlacePiece(self, ptReference, gp, blnGhostPlacement = False):
+    def PlacePiece(self, ptReference, 
+                   gp, 
+                   blnGhostPlacement = False,
+                   blnFirstMove = False):
         """ Attempts to place a game piece onto the board.
         
         If it is detected that placing a piece would be a valid move,
@@ -76,9 +51,12 @@ class GameBoard:
         Arguments:
             ptReference: a tuple with an integer x and an integer y.
             gp: a GamePiece type object.
+            blnFirstMove: Identifies if it is a player's first move.
         """
         if not blnGhostPlacement:
-            blnValidToPlacePiece = self.ValidToPlacePiece(ptReference, gp)
+            blnValidToPlacePiece = self.ValidToPlacePiece(ptReference, 
+                                                          gp,
+                                                          blnFirstMove)
         else:
             blnValidToPlacePiece = True
             
@@ -86,35 +64,46 @@ class GameBoard:
             PlayerTile = GT.GameTile(gp.playerID, blnGhostPlacement)
             for x, y in gp.lsLocations:
                 xRef = ptReference.x + x
-                yRef = ptReference.y + y      
-                if xRef >= self.xMax:
-                    xRef = self.xMax - 1
-                if yRef >= self.xMax:
-                    yRef = self.xMax - 1
-                self.lsLocations[xRef][yRef] = PlayerTile
+                yRef = ptReference.y + y   
+                if (not xRef >= self.xMax and
+                    not yRef >= self.yMax and
+                    not xRef < self.xMin and
+                    not yRef < self.xMin):
+                        self.lsLocations[xRef][yRef] = PlayerTile
                 
         return blnValidToPlacePiece
             
         
-    def ValidToPlacePiece(self, ptReference, gp):
+    def ValidToPlacePiece(self, ptReference, gp, blnFirstMove = False):
         """ Verifies if it is valid to place a piece
         
         Arguments:
             ptReference: a tuple with an integer x and an integer y.
             gp: a GamePiece type object.
+            blnFirstMove: Identifies if it is a player's first move.
         """
         blnValidDiagonalPiece = False
+        blnFirstMoveInCorner = False
         lsDiagonalOffsets = [(1,1),(1,-1),(-1,1),(-1,-1)]
         lsCardinalOffsets = [(0,1),(1,0),(-1,0),(0,-1)]
+        lsCORNERS = [
+            P.point(0,0),
+            P.point(0,self.yMax - 1),
+            P.point(self.xMax - 1, 0),
+            P.point(self.xMax - 1, self.yMax - 1),
+        ]
           
         'Can\'t use it if it\'s been used!'          
         if gp.used:
             return False
-            
+        
         'Find invalid states'
         for x, y in gp.lsLocations:
             xRef = ptReference.x + x
             yRef = ptReference.y + y
+                    
+            if P.point(xRef, yRef) in lsCORNERS:
+                blnFirstMoveInCorner = True
 
             'Find if the piece is actually on the board'
             if (xRef >= self.xMax or xRef < self.xMin or \
@@ -123,38 +112,41 @@ class GameBoard:
                     
             'Find if there is a collision on this tile'
             if self.lsLocations[xRef][yRef].playerID != 0:
-                if self.lsLocations[xRef][yRef].isReal:
-                    return False
+                return False
                 
             'Find if there is a cardinally adjacent piece of the same type'
-            lsEdges = [
-                self.lsLocations[xRef+w][yRef+z]
-                for w,z in lsCardinalOffsets]
-                    
+            lsEdges = []
+            for w,z in lsCardinalOffsets:
+                if xRef + w < self.xMax and yRef + z < self.yMax:
+                    if xRef + w >= 0 and yRef + z >= 0:
+                        lsEdges.append(self.lsLocations[xRef+w][yRef+z])
+
             for tile in lsEdges:
                 if tile.playerID == gp.playerID:
-                    if tile.isReal:
-                        return False
+                    return False
+                        
             'Find if there is a diagonally adjacent piece of the same type'
-
             if not blnValidDiagonalPiece:
-                lsCorners = [
-                    self.lsLocations[xRef+w][yRef+z]
-                    for w,z in lsDiagonalOffsets]
+                lsCorners = []
+                for w,z in lsDiagonalOffsets:
+                    if xRef + w < self.xMax and yRef + z < self.yMax:
+                        if xRef + w >= 0 and yRef + z >= 0:
+                            lsCorners.append(self.lsLocations[xRef+w][yRef+z])
+
             
                 for tile in lsCorners:
                     if tile.playerID == gp.playerID:
-                        if tile.isReal:
-                            blnValidDiagonalPiece = True
+                        blnValidDiagonalPiece = True
                   
         'If we made it this far, return the valid of valid diagonal piece'
-        return blnValidDiagonalPiece
+        return blnValidDiagonalPiece or (blnFirstMove and blnFirstMoveInCorner)
         
-    def CheckForValidMoves(self, gamepiece):
+    def CheckForValidMoves(self, gamepiece, blnFirstMove):
         """ Checks to see if a piece can make any valid moves
         
         Arguments:
             gp: A game piece
+            blnFirstMove: A boolean telling whether this is a first turn.
         """
         gp = gamepiece.copy()
         for x in range(self.xMin, self.xMax):
@@ -162,8 +154,8 @@ class GameBoard:
                 pt = P.point(x,y)
                 for j in range(0,2):
                     for i in range(0,4):
-                        if self.ValidToPlacePiece(pt, gp):
-                            print("player: %s, x: %s, y: %s"%(gp.playerID, pt.x,pt.y))
+                        if self.ValidToPlacePiece(pt, gp, blnFirstMove):
+                            print("PLAYER: %s, X: %s, Y: %s"%(gamepiece.playerID, pt.x, pt.y))
                             return True
                         gp.Rotate()
                     gp.Rotate()

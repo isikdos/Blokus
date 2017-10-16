@@ -14,11 +14,10 @@ class GameTile:
             has actually been placed.
     """
     
-    def __init__(self, playerID, isGhost = False, isReal = True):
+    def __init__(self, playerID, isGhost = False):
         self.playerID = playerID
         self.isGhost = isGhost
-        self.isReal = isReal
         
     def copy(self):
-        gt = GameTile(self.playerID, self.isGhost, self.isReal)
+        gt = GameTile(self.playerID, self.isGhost)
         return gt
