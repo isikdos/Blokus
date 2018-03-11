@@ -155,7 +155,6 @@ class GameBoard:
                 for j in range(0,2):
                     for i in range(0,4):
                         if self.ValidToPlacePiece(pt, gp, blnFirstMove):
-                            print("PLAYER: %s, X: %s, Y: %s"%(gamepiece.playerID, pt.x, pt.y))
                             return True
                         gp.Rotate()
                     gp.Rotate()

@@ -211,7 +211,7 @@ class GUI:
         
     def DisplayTurn(self):
         """ Dummy function. Tells the user which player's turn it is """
-        print("It is {0}'s turn!".format(self.GameState.ActivePlayer.name))
+        pass
         
     def DisplayBoard(self, blnGhost = False):
         lsPlayableLocations = self.GameState.GameBoard.lsLocations
